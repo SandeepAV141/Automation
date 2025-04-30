@@ -1,1 +1,45 @@
-test
+---
+- name: Delete temporary files on Windows Server
+  hosts: windows_servers
+  gather_facts: no
+  tasks:
+    - name: Delete files from the system Temp folder
+      win_file:
+        path: "{{ ansible_env.TEMP }}"
+        state: absent
+        recurse: yes
+      ignore_errors: yes  # In case the Temp folder is in use
+
+    - name: Delete files from the Windows Temp folder (C:\Windows\Temp)
+      win_file:
+        path: "C:\\Windows\\Temp"
+        state: absent
+        recurse: yes
+      ignore_errors: yes
+
+    - name: Clean up Windows Prefetch folder
+      win_file:
+        path: "C:\\Windows\\Prefetch"
+        state: absent
+        recurse: yes
+      ignore_errors: yes
+
+    - name: Delete files from the user profile temp folder
+      win_file:
+        path: "{{ ansible_env.APPDATA }}\\Microsoft\\Windows\\Recent"
+        state: absent
+        recurse: yes
+      ignore_errors: yes
+
+    - name: Clear Windows Update cache (optional)
+      win_file:
+        path: "C:\\Windows\\SoftwareDistribution\\Download"
+        state: absent
+        recurse: yes
+      ignore_errors: yes
+
+    - name: Empty the Recycle Bin
+      win_shell: |
+        $recyclebin = New-Object -ComObject Shell.Application
+        $recyclebin.NameSpace('shell:::{645FF040-5081-101B-9F08-00AA002F954E}').Items() | ForEach-Object { $_.InvokeVerb('delete') }
+      ignore_errors: yes
